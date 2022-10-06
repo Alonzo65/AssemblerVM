@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <cstdio>
 #include <cstdlib>
+#include <utility>
 #include <stdexcept>
 #include <unordered_map>
 #include <tuple>
@@ -25,14 +26,16 @@ public:
 	//checkToks will check for syntax and return a tuple of the int values of the opcode, operand1, and operand2
 	tuple<int,int,int>* checkToks(string opcode, string operand1, string operand2, unordered_map<string, int>& symbolTabl) {
 		//check if the opcode given is a valid instruction
-		if (opcodes.count(opcode) == 0) {
+		if (opcodes.count(opcode) == 0 && moveOpcodes.count(opcode) == 0) {
 			//throw an exception/error code saying that this opcode is not a valid instruction
 			errMsg = opcode + " is not a valid instruction.";
 			throw invalid_argument(errMsg);
 		}
 		
-		//set instruction to the int value of the opcode found in the opcodes map
-		instruction = opcodes.at(opcode);
+		if (opcodes.count(opcode) > 0) {
+			//set instruction to the int value of the opcode found in the opcodes map
+			instruction = opcodes.at(opcode);
+		}
 
 		//run the specific instructions code to check for proper syntax
 		if (instruction == 1) {	//JMP
@@ -48,7 +51,39 @@ public:
 				throw invalid_argument(errMsg);
 			}
 		}
-		else if (isIn(instruction, { 7, 13, 15, 16, 17 })) {	//MOV, ADD, SUB, MUL, DIV
+		else if (instruction == 2) {	//JMR
+			//remove any white space
+			oper1 = operand1.substr(0, operand1.find(" "));
+			//check to see if oper1(operand1) is a label that lies in the symbolTable
+			if (symbolTabl.count(oper1) > 0) {
+				binaryVals = make_tuple(instruction, symbolTabl.at(oper1), op2);
+			}
+			else {
+				//throw an exception saying that the operand1 provided is not a label 
+				errMsg = "Operand 1 for " + opcode + " is not a label.";
+				throw invalid_argument(errMsg);
+			}
+		}
+		else if (isIn(instruction, { 3, 4, 5, 6, 8})) {	//BNZ, BGT, BLT, BRZ, LDA
+			//check for comma and white space
+			if (operand1.find(", ") == string::npos) {
+				//throw an exception message saying that there needs to be a comma and white space seperating operand 1 and 2
+				errMsg = "Syntax error: There needs to be a comma and white space seperating operand 1 and operand 2.";
+				throw invalid_argument(errMsg);
+			}
+
+			oper1 = operand1.substr(0, operand1.find(","));
+			//check if oper1 and operand2 are both registers
+			if (registers.count(oper1) > 0 && symbolTabl.count(operand2) > 0) {
+				binaryVals = make_tuple(instruction, registers.at(oper1), symbolTabl.at(operand2));
+			}
+			else {
+				//throw an exception message saying that <instruction> requires that both operands be registers
+				errMsg = opcode + " instruction requires that operand 1 be a register and operand 2 be a label.";
+				throw invalid_argument(errMsg);
+			}
+		}
+		else if (isIn(instruction, { 7, 13, 15, 16, 17, 20 })) {	//MOV, ADD, SUB, MUL, DIV, CMP
 			//check for comma and white space
 			if (operand1.find(", ") == string::npos) {
 				//throw an exception message saying that there needs to be a comma and white space seperating operand 1 and 2
@@ -67,30 +102,36 @@ public:
 				throw invalid_argument(errMsg);
 			}
 		}
-		else if (isIn(instruction, {10, 12})) {	//LDR, LDB
+		else if (moveOpcodes.count(opcode) > 0) {	//LDR, LDB, STR, STB
 			//check to see if there is a comma and white space seperating operand 1 and operand 2
 			if (operand1.find(", ") == string::npos) {
 				//throw an exception message saying that there needs to be a comma and white space seperating operand 1 and 2
 				errMsg = "Syntax error: There needs to be a comma and white space seperating operand 1 and operand 2.";
 				throw invalid_argument(errMsg);
 			}
+			pair<int, int> opVals(moveOpcodes.at(opcode));
 
 			//set oper1 to operand1, but without any commas
 			oper1 = operand1.substr(0, operand1.find(","));
 
 			//check if oper1 is a register and operand2 is a label
 			if (registers.count(oper1) > 0 && symbolTabl.count(operand2) > 0) {
+				//operand 1 is a register and operand 2 is a label
 				//set binaryVals to a new tuple of the int values of instruction, oper1, and operand2
-				binaryVals = make_tuple(instruction, registers.at(oper1), symbolTabl.at(operand2));
+				binaryVals = make_tuple(opVals.first, registers.at(oper1), symbolTabl.at(operand2));
+			}
+			else if (registers.count(oper1) > 0 && registers.count(operand2) > 0) {
+				//operand 1 is a register and operand 2 is a register
+				binaryVals = make_tuple(opVals.second, registers.at(oper1), registers.at(operand2));
 			}
 			else {
 				//throw an exception message saying that <instruction> requires that operand1 be a register and operand 2 has to be a label
-				errMsg = opcode + " instruction requires that operand 1 be a register and operand 2 be a label.";
+				errMsg = opcode + " instruction requires that operand 1 be a register and operand 2 be a label or a register.";
 				throw invalid_argument(errMsg);
 			}
 		}
 		else {
-			//only thing left is TRP since we already checked earlier if opcode exists in the opcode table
+			//only thing left is TRP and add immediate since we already checked earlier if opcode exists in the opcode table
 			//get rid of any white space in operand1
 			oper1 = operand1.substr(0, operand1.find(" "));
 			//check if user provided a label, register, or nothing for operand 1 for the TRP instruction
@@ -99,7 +140,12 @@ public:
 				errMsg = opcode + " requires a decimal number for operand 1.";
 				throw invalid_argument(errMsg);
 			}
-				binaryVals = make_tuple(instruction, stoi(oper1), op2);	
+			if (instruction == 14) {//ADI
+			binaryVals = make_tuple(instruction, registers.at(oper1), stoi(operand2));
+			}
+			else {
+				binaryVals = make_tuple(instruction, stoi(oper1), op2);
+			}
 		}
 		//set instruction and operands back to 0
 		instruction = 0;
@@ -119,16 +165,30 @@ private:
 	//if not then throw an error, if it does exist then return its int value
 	unordered_map<string, int> opcodes = {
 		{"JMP", 1},
+		{"JMR", 2},
+		{"BNZ", 3},
+		{"BGT", 4},
+		{"BLT", 5},
+		{"BRZ", 6},
 		{"MOV", 7},
-		{"LDR", 10},
-		{"LDB", 12},
+		{"LDA", 8},
 		{"ADD", 13},
+		{"ADI", 14},
 		{"SUB", 15},
 		{"MUL", 16},
 		{"DIV", 17},
+		{"CMP", 20},
 		{"TRP", 21}	
 	};
 	
+	unordered_map<string, pair<int,int>> moveOpcodes = {
+		
+		{"STR", pair<int,int>(9, 22)},
+		{"LDR", pair<int,int>(10, 23)},
+		{"STB", pair<int,int>(11, 24)},
+		{"LDB", pair<int,int>(12, 25)}
+	};
+
 	unordered_map<string, int> registers = {
 		{"R0", 0},
 		{"R1", 1},

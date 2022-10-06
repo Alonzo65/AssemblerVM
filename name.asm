@@ -1,5 +1,4 @@
 ;name letters 
-    .BYT    'v' ;testing if it still loads as symbol
 A   .BYT   'A'
 L   .BYT   'L'
 O   .BYT   'O'

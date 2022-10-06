@@ -50,7 +50,7 @@ void runAssembler(string fileN) {
 
 
 		regex commentNL("^\\s*\\;");
-		regex label("^(\\w+)(\\S?)\\s*(\.?\\w*)");	//match any words and capture any letters that are invalid
+		regex label("^(\\w*)(\\S?)\\s*(\.?\\w*)");	//match any words and capture any letters that are invalid
 		regex chkBegLabel("^[^\\s\\w]"); //check the beginning of the the label for any invalid characters
 
 		bool firstInstr = true;
@@ -69,10 +69,11 @@ void runAssembler(string fileN) {
 		while (!asmFile.eof()) {
 			getline(asmFile, parseLine);
 			lineNum++;
+			regex_search(parseLine, labelVal, label);
 			try {
 				if (regex_search(parseLine, commentNL) || parseLine.size() == 0) {	//skip the line since its a comment or empty line
 				}
-				else if (regex_search(parseLine, labelVal, label)) {
+				else if (labelVal[1] != "" || directives.count(labelVal[3]) > 0) {
 
 					//check if an invalid character was used in the label name
 					if (labelVal[2] != "") {
@@ -81,7 +82,7 @@ void runAssembler(string fileN) {
 					}
 
 					//check if label is a directive
-					if (directives.count(labelVal[3]) > 0) {
+					if (directives.count(labelVal[3]) > 0 && labelVal[1] != "") {
 						if (directives.at(labelVal[3]) == 1) {
 							//directive is a .BYT so increment offset by 1
 							symbolTable.insert({ labelVal[1], offset });
@@ -90,6 +91,19 @@ void runAssembler(string fileN) {
 						else {
 							//directive is a .INT so increment offset by 4
 							symbolTable.insert({ labelVal[1], offset });
+							offset += 4;
+						}
+					}
+					else if (directives.count(labelVal[3]) > 0) {
+						//no label given, so we just increment by the correct offset and dont insert it into our symbol table
+						if (directives.at(labelVal[3]) == 1) {
+							//directive is a .BYT so increment offset by 1
+							
+							offset++;
+						}
+						else {
+							//directive is a .INT so increment offset by 4
+							
 							offset += 4;
 						}
 					}

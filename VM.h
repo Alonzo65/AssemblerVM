@@ -9,16 +9,25 @@
 #include <cstdlib>
 #include <stdexcept>
 #include <stdlib.h>
+#include <utility>
+#include <memory>
 using namespace std;
+//have to copy the whole .bin file into memory maybe read in file size and allocate that much in memory and copy it over? 
+//if im gonna be changing the values in the array i should make a copy of it?? how do i know which ones are .int and which are .byts
+ 
 
 //make pc read only, which instructions do we need to check this for?
 void runVM(string fileN) {
 	int opcode = 0;
 	int operand1 = 0;
 	int operand2 = 0;
-
+	char* dataSegment;	//pointer to our copied bin file in memory
+	//hold the range of directive values
+	pair<int, int> directiveSegment;
+	
+	
 	//R0-R15 general use pc will be R16 so in total 17 elements in register array
-	int r[17] = {};	//have to make r[16] which is the pc read only
+	long long r[17] = {};	//have to make r[16] which is the pc read only
 	char readB;//used to hold a byte when reading in from cin
 	char byte[3 * sizeof(int)] = {}; //12 bytes, array is initialized to zero for all registers
 
@@ -38,11 +47,43 @@ void runVM(string fileN) {
 	auto maxPc = binF.tellg();
 	binF.seekg(0, ios::beg);
 
+	//allocate memory equal to the size of the .bin file
+	char* dataPtr;	//have to set this back to dataSegment after using it to get the address
+	//i dont think we need dataPtr
+	dataSegment = (char*)malloc(maxPc);
+	binF.read(&dataSegment[0], maxPc);
+	dataPtr = dataSegment;
+	//dataPtr += 4;
+	//long long testers;
+	//cout << long long(dataPtr) << dataPtr << endl;
+	//testers = long long(dataSegment);
+	//dataPtr = reinterpret_cast<char*>(testers);
+	//cout << testers << endl;
+	//cout << int(* dataPtr);
+	
+	//cout << &dataSegment << endl << dataSegment << endl;
+	//cout << (*dataSegment) << endl;
+	//cout << &dataPtr;
+	//cout << *(dataSegment + 4);
+	//cout << *dataSegment;
+	//testing
+	//cout << int(dataSegment[0]);
+	//dataSegment[0] = 10;
+	//*dataPtr = 10;
+	//cout << int(dataSegment[0]);
+	//cout << int(dataSegment[0]);
+
+	//reset file
+	binF.clear();
+	binF.seekg(0, ios::beg);
+
 	//might place this in a function called fetch
 	binF.read(byte, 3 * sizeof(int)); // 12 bytes read
 	r[16] = int(byte[0]);	//might need to change this to read 4 bytes instead of just one
 	binF.seekg(r[16], ios::beg);	//set pointer of file stream to main instruction
-
+	
+	//will be used in LDA to check if label is a directive
+	directiveSegment = make_pair(4, r[16]);
 
 
 	while (binF.tellg() != maxPc) {
@@ -65,9 +106,51 @@ void runVM(string fileN) {
 				r[16] = operand1;
 				binF.seekg(r[16], ios::beg);
 				break;
+			case 2:	//JMR
+				r[16] = r[operand1];
+				binF.seekg(r[16], ios::beg);
+				break;
+			case 3:	//BNZ
+				if (r[operand1] != 0) {
+					r[16] = operand2;
+					binF.seekg(r[16], ios::beg);
+				}
+				
+				break;
+			case 4:	//BGT
+				if (r[operand1] > 0) {
+					r[16] = operand2;
+					binF.seekg(r[16], ios::beg);
+				}
+				
+				break;
+			case 5:	//BLT
+				if (r[operand1] < 0) {
+					r[16] = operand2;
+					binF.seekg(r[16], ios::beg);
+				}
+				
+				break;
+			case 6:	//BRZ
+				if (r[operand1] == 0) {
+					r[16] = operand2;
+					binF.seekg(r[16], ios::beg);
+				}
+				
+				break;
 			case 7:	//mov allowed to change pc
 				r[operand1] = r[operand2];
 				//come back and alter in case it changes pc i will need to jump to it i think
+				break;
+			case 8:	//LDA only work if label is to a directive
+				if (directiveSegment.first <= operand2 && operand2 < directiveSegment.second) {
+					r[operand1] = long long(dataSegment + operand2);
+				}
+				
+				break;
+			case 9:	//STR //since it gives the offset we can just access it directly in our dataSegment
+				dataSegment[operand2] = int(r[operand1]);
+				
 				break;
 			case 10:	//ldr
 				//changed this to read in 4 bytes from the label instead of just one like ldb
@@ -75,6 +158,10 @@ void runVM(string fileN) {
 				binF.read(byte, sizeof(int));
 				r[operand1] = *(int*)(byte);
 				binF.seekg(r[16], ios::beg);
+				break;
+			case 11:	//STB //since it gives the offset we can just access it directly in our dataSegment
+				dataSegment[operand2] = char(r[operand1]);
+
 				break;
 			case 12:	//ldb
 				binF.seekg(operand2, ios::beg);
@@ -86,6 +173,12 @@ void runVM(string fileN) {
 					throw invalid_argument("Instruction ADD cannot modify the contents of the PC");
 				}
 				r[operand1] = r[operand1] + r[operand2];
+				break;
+			case 14:	//ADI
+				if (operand1 == 16) {
+					throw invalid_argument("Instruction ADD cannot modify the contents of the PC");
+				}
+				r[operand1] = r[operand1] + operand2;
 				break;
 			case 15:	//sub
 				if (operand1 == 16) {
@@ -104,6 +197,18 @@ void runVM(string fileN) {
 					throw invalid_argument("Instruction DIV cannot modify the contents of the PC");
 				}
 				r[operand1] = r[operand1] / r[operand2];
+				break;
+			case 20:	//CMP
+				if (r[operand1] == r[operand2]) {
+					r[operand1] = 0;
+				}
+				else if (r[operand1] > r[operand2]) {
+					r[operand1] = 1;
+				}
+				else {//RD<RS this is the last case so we dont need to check
+					r[operand1] = -1;
+				}
+
 				break;
 			case 21:	//trp check operand 1 for what kind of trap it is
 				switch (operand1) {
@@ -127,6 +232,27 @@ void runVM(string fileN) {
 					break;
 
 				}
+				break;
+			case 22:	//STR
+				dataPtr = reinterpret_cast<char*>(r[operand2]);
+				*dataPtr = int(r[operand1]);
+
+				break;
+			case 23:	//LDR
+				dataPtr = reinterpret_cast<char*>(r[operand2]);
+				
+				r[operand1] = *(int*)(dataPtr);
+				break;
+			case 24:	//STB
+				dataPtr = reinterpret_cast<char*>(r[operand2]);
+				*dataPtr = char(r[operand1]);
+
+				break;
+			case 25:	//LDB
+				dataPtr = reinterpret_cast<char*>(r[operand2]);
+
+				r[operand1] = *(dataPtr);	//is already a char* so dereferencing it returns a byte of size char
+
 				break;
 			default:
 				cout << "Exited incorrectly on pc: " << r[16] << endl;
