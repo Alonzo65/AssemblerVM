@@ -142,7 +142,7 @@ public:
 				binaryVals = make_tuple(instruction, registers.at(oper1), stoi(operand2));
 		}
 		else{
-			//only thing left is TRP and add immediate since we already checked earlier if opcode exists in the opcode table
+			//only thing left is TRP since we already checked earlier if opcode exists in the opcode table
 			//get rid of any white space in operand1
 			oper1 = operand1.substr(0, operand1.find(" "));
 			//check if user provided a label, register, or nothing for operand 1 for the TRP instruction

@@ -16,7 +16,6 @@ using namespace std;
 #include <tuple>
 #include <sstream>
 
-//can turn this into a class, but is it necessary? it would condense the code and make it nicer
 
 void runAssembler(string fileN) {
 
@@ -170,11 +169,10 @@ void runAssembler(string fileN) {
 
 						if (directives.at(labelToks[1]) == 4) {
 							//directive is a .INT
-							//set operand 1 to the decimal value capturing group labelToks[2]
+							//set operand 1 to the decimal value capturing group labelToks[3]
 
 							operand1 = labelToks[3];
-							//parse out the #
-							//operand1 = operand1.substr(0, operand1.find("#"));
+							
 							if (operand1 == "") {
 								//nothing was given for operand 1 so we set charRep to be 0 which is what will be written to file
 								charRep = 0;
@@ -189,7 +187,7 @@ void runAssembler(string fileN) {
 						}
 						else {
 							//since we already checked to see that token[1] is a directive then we know its a .BYT
-							//set operand 1 to the byte capturing group labelToks[3]
+							//set operand 1 to the byte capturing group labelToks[5]
 							operand1 = labelToks[5];
 
 							charRep = int(operand1[0]);
