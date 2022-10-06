@@ -1,0 +1,90 @@
+
+DAGS	.BYT	'D'
+		.BYT 	'A'
+		.BYT 	'G'
+		.BYT 	'S'
+GADS		.BYT 	'G'
+		.BYT 	'A'
+		.BYT 	'D'
+		.BYT 	'S'
+i 			.INT    #0
+SIZE		.INT 	#4
+rel			.BYT 
+HYPHEN 		.BYT 	'-'
+EQUALS 		.BYT 	'='
+SPACE 		.BYT 	' '
+GREATERTHAN 	.BYT 	'>'
+LESSTHAN 		.BYT 	'<'
+ENDLINE 		.BYT 	'\n'
+
+;.BYT LETTERS TO PRINT
+	JMP MAIN
+MAIN	LDA R0, DAGS
+		LDA R1, GADS
+		LDB R2, rel
+		LDR R4, i
+		MOV R5, R4
+		LDR R6, SIZE
+FORLOOP CMP R5, R6
+		BRZ R5, END 
+		LDB R7, R0
+		LDB R8, R1
+		CMP R7, R8
+		BGT R7, ELSEIF
+		BRZ R7, ELSE 
+IF		LDB R2, LESSTHAN
+		JMP INCR_PRINT
+ELSEIF	LDB R2, GREATERTHAN
+		JMP INCR_PRINT
+ELSE	LDB R2, EQUALS
+INCR_PRINT	LDB R3, R0
+			TRP #3
+			LDB R3, SPACE
+			TRP #3
+			MOV R3, R2
+			TRP #3
+			LDB R3, SPACE
+			TRP #3
+			MOV R3, R8
+			TRP #3
+			LDB R3, SPACE
+			TRP #3
+			LDB R3, HYPHEN
+			TRP #3
+			TRP #3
+			LDB R3, SPACE
+			TRP #3
+			ADI R0, #1
+			ADI R1, #1
+			ADI R4, #1
+			MOV R5, R4
+			JMP FORLOOP
+END			LDB R3, ENDLINE
+			TRP #3
+;ACCESS GADS AND DAGS AS AN INTEGER
+			LDR R4, DAGS
+			MOV R5, R4
+			LDR R6, GADS
+			SUB R5, R6
+			MOV R3, R4
+			TRP #1
+			LDB R3, SPACE
+			TRP #3
+			LDB R3, HYPHEN
+			TRP #3
+			LDB R3, SPACE
+			TRP #3
+			MOV R3, R6
+			TRP #1
+			LDB R3, SPACE
+			TRP #3
+			LDB R3, EQUALS
+			TRP #3
+			LDB R3, SPACE
+			TRP #3
+			MOV R3, R5
+			TRP #1
+			LDB R3, ENDLINE
+			TRP #3
+			TRP #0
+

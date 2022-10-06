@@ -110,4 +110,5 @@ END		LDB   R3, S
         TRP   #1
 		LDB   R3, ENDLINE
         TRP   #3
+		TRP   #3	;IT SAYS WE HAVE TO PRINT TWO ENDLINES
 		TRP   #0
