@@ -71,7 +71,7 @@ void runVM(string fileN) {
 	//dataSegment[0] = 10;
 	//*dataPtr = 10;
 	//cout << int(dataSegment[0]);
-	//cout << int(dataSegment[0]);
+	//cout << *(int*)(dataSegment+1);
 
 	//reset file
 	binF.clear();

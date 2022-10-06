@@ -130,7 +130,18 @@ public:
 				throw invalid_argument(errMsg);
 			}
 		}
-		else {
+		else if (instruction == 14) {//ADI AND ANY OTHER IMMEDIATE OPCODES
+			
+				oper1 = operand1.substr(0, operand1.find(","));
+				
+				if (registers.count(oper1) < 1 || symbolTabl.count(operand2) > 0 || registers.count(operand2) > 0 || operand2 == "") {	//create a function to check for register and symbol
+					//the given operand 1 must be a decimal number
+					errMsg = opcode + " instruction requires that operand 1 be a register and operand 2 be a decimal number.";
+					throw invalid_argument(errMsg);
+				}
+				binaryVals = make_tuple(instruction, registers.at(oper1), stoi(operand2));
+		}
+		else{
 			//only thing left is TRP and add immediate since we already checked earlier if opcode exists in the opcode table
 			//get rid of any white space in operand1
 			oper1 = operand1.substr(0, operand1.find(" "));
@@ -140,12 +151,8 @@ public:
 				errMsg = opcode + " requires a decimal number for operand 1.";
 				throw invalid_argument(errMsg);
 			}
-			if (instruction == 14) {//ADI
-			binaryVals = make_tuple(instruction, registers.at(oper1), stoi(operand2));
-			}
-			else {
-				binaryVals = make_tuple(instruction, stoi(oper1), op2);
-			}
+			binaryVals = make_tuple(instruction, stoi(oper1), op2);
+			
 		}
 		//set instruction and operands back to 0
 		instruction = 0;

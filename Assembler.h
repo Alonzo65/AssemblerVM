@@ -150,9 +150,9 @@ void runAssembler(string fileN) {
 		smatch tokens;
 		smatch labelToks;
 		//lineParser will parse a line from .asm file to its proper tokens
-		regex lineParser("^\\w*\\s*(\.?\\w*)?\\s*[#']?(\\w*\,?\\s*)?\'?(\\w*)");
+		regex lineParser("^\\w*\\s*(\.?\\w*)?\\s*[#']?(\\w*\,?\\s*)?\'?[#']?(-?\\w*)");
 		//labelParser will parse the tokens for labels
-		regex labelParser("^\\w*\\s*(\.?\\w*)?\\s*(#{1}(\\w*))?('{1}(\\S?\\w*\\s?\\S?)?'{1})?");
+		regex labelParser("^\\w*\\s*(\.?\\w*)?\\s*(#{1}(-?\\w*))?('{1}(\\S?\\w*\\s?\\S?)?'{1})?");
 		//pass2
 		while (!asmFile.eof()) {
 			getline(asmFile, parseLine);
