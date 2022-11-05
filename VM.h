@@ -267,6 +267,7 @@ void runVM(string fileN) {
 		}
 
 		//check if pc is out of bounds
+		//also check if there is a stack overflow or underflow.
 		if (r[16] > maxPc) {
 			cout << "error, pc is out of bounds and in the data segment: pc > maxPc" << endl;
 			exit(0);
