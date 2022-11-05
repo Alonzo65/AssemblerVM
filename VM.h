@@ -27,7 +27,8 @@ void runVM(string fileN) {
 	
 	
 	//R0-R15 general use pc will be R16 so in total 17 elements in register array
-	long long r[17] = {};	//have to make r[16] which is the pc read only
+	long long r[21] = {};	//have to make r[16] which is the pc read only
+	//registers can now have SL:17, SB:18, SP:19, FP:20(we will just use a general use register to act as the PFP)
 	char readB;//used to hold a byte when reading in from cin
 	char byte[3 * sizeof(int)] = {}; //12 bytes, array is initialized to zero for all registers
 
