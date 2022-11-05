@@ -37,8 +37,8 @@ void runAssembler(string fileN) {
 		};
 
 		//DECLARE STACK AND SIZE
-		char* stack = (char*)malloc(1024);//bytes for the whole stack
-		
+		//char* stack = (char*)malloc(1024);//bytes for the whole stack
+		char stack[1024] = {};
 		//open out .asm file
 		ifstream asmFile(fileN, ios::in);
 		fileName = fileN;

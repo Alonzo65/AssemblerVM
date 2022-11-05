@@ -268,12 +268,20 @@ void runVM(string fileN) {
 
 		//check if pc is out of bounds
 		//also check if there is a stack overflow or underflow.
+		if (r[19] > r[18]) {
+			cout << "Error: stack underflow detected: SP > SB" << endl;
+			exit(0);
+		}
+		else if(r[19] < r[17]) {
+			cout << "Error: stack overflow detected: SP < SL" << endl;
+			exit(0);
+		}
 		if (r[16] > maxPc) {
-			cout << "error, pc is out of bounds and in the data segment: pc > maxPc" << endl;
+			cout << "Error, pc is out of bounds and in the data segment: pc > maxPc" << endl;
 			exit(0);
 		}
 		else if (r[16] < minPc) {
-			cout << "error, pc is out of bounds and is outside of the code segment: pc < minPc" << endl;
+			cout << "Error, pc is out of bounds and is outside of the code segment: pc < minPc" << endl;
 			exit(0);
 		}
 
