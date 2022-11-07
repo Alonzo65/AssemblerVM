@@ -1,5 +1,6 @@
 FIVE	.INT #5
-
+;need to have a function or label that conains stack overflow and underflow error message/ instructions
+;need to take in input from user using trp 
 ;.BYT LETTERS TO PRINT
 		JMP MAIN
 ADDTWO	MOV R4, FP
