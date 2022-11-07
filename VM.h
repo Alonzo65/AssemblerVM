@@ -45,15 +45,39 @@ void runVM(string fileN) {
 	//set limits of min pc and max pc
 	auto minPc = binF.tellg();
 	binF.seekg(0, ios::end);
-	auto maxPc = binF.tellg();
+	//set the end to SB
+	r[18] = binF.tellg();
+	//set SL to SB -1020
+	r[17] = r[18] - 1024;
+	//might not need to do -4 to set maxPc might just be -1
+	int maxPc = r[17] - 1;
+	//auto maxPc = binF.tellg();
 	binF.seekg(0, ios::beg);
+
+	//set the stack pointer and frame pointer
+	//assembly instruction will decrement sp by 4 so we dont need to do that here
+	r[19] = r[18];
+	r[20] = r[18];
+
+
+	////testing
+	//binF.seekg(r[18], ios::beg);
+	//binF.write(readB, sizeof(int));
+	//cout << byte << endl;
+	//binF.seekg(r[17], ios::beg);
+	//binF.read(byte, sizeof(int));
+	//cout << byte << endl;
+	//binF.seekg(maxPc, ios::beg);
+	//binF.read(byte, sizeof(int));
+	//cout << byte << endl;
 
 	//allocate memory equal to the size of the .bin file
 	char* dataPtr;	//have to set this back to dataSegment after using it to get the address
 	//i dont think we need dataPtr
-	dataSegment = (char*)malloc(maxPc);
-	binF.read(&dataSegment[0], maxPc);
+	dataSegment = (char*)malloc(r[18]);
+	binF.read(&dataSegment[0], r[18]);
 	dataPtr = dataSegment;
+
 	//dataPtr += 4;
 	//long long testers;
 	//cout << long long(dataPtr) << dataPtr << endl;
@@ -235,22 +259,41 @@ void runVM(string fileN) {
 				}
 				break;
 			case 22:	//STR
-				dataPtr = reinterpret_cast<char*>(r[operand2]);
-				*dataPtr = int(r[operand1]);
+				dataPtr = dataSegment;
+				dataPtr += r[operand2];
+				//dataPtr = reinterpret_cast<char*>(r[operand2]);
+				//problem it is only storing one char
+				//maybe convert to int first?
+				memcpy(dataPtr,(char*)&r[operand1], sizeof(int));
+				//*dataPtr = int(r[operand1]);
 
+				//only storing one char value
+				//cout << *(reinterpret_cast<int*>(dataPtr));
+				//its working correctly
+				//dataPtr++;
+				//dataPtr++;
+				
 				break;
 			case 23:	//LDR
-				dataPtr = reinterpret_cast<char*>(r[operand2]);
+				dataPtr = dataSegment;
+				dataPtr += r[operand2];
+				//dataPtr = reinterpret_cast<char*>(r[operand2]);
+				//maybe do error checking to see if its trying to access outside of the file
 				
 				r[operand1] = *(int*)(dataPtr);
 				break;
 			case 24:	//STB
-				dataPtr = reinterpret_cast<char*>(r[operand2]);
+				//dataPtr = reinterpret_cast<char*>(r[operand2]);
+				//reset it back to the begginning which is dataSegment
+				dataPtr = dataSegment;
+				dataPtr += r[operand2];
 				*dataPtr = char(r[operand1]);
 
 				break;
 			case 25:	//LDB
-				dataPtr = reinterpret_cast<char*>(r[operand2]);
+				//dataPtr = reinterpret_cast<char*>(r[operand2]);
+				dataPtr = dataSegment;
+				dataPtr += r[operand2];
 
 				r[operand1] = *(dataPtr);	//is already a char* so dereferencing it returns a byte of size char
 

@@ -55,12 +55,12 @@ public:
 			//remove any white space
 			oper1 = operand1.substr(0, operand1.find(" "));
 			//check to see if oper1(operand1) is a label that lies in the symbolTable
-			if (symbolTabl.count(oper1) > 0) {
-				binaryVals = make_tuple(instruction, symbolTabl.at(oper1), op2);
+			if (registers.count(oper1) > 0) {
+				binaryVals = make_tuple(instruction, registers.at(oper1), op2);
 			}
 			else {
 				//throw an exception saying that the operand1 provided is not a label 
-				errMsg = "Operand 1 for " + opcode + " is not a label.";
+				errMsg = "Operand 1 for " + opcode + " is not a register.";
 				throw invalid_argument(errMsg);
 			}
 		}
