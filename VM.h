@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <deque>
 #include <array>
 #include <stdio.h>
 #include <cstdio>
@@ -24,6 +25,12 @@ void runVM(string fileN) {
 	char* dataSegment;	//pointer to our copied bin file in memory
 	//hold the range of directive values
 	pair<int, int> directiveSegment;
+
+	//varaibles to make my trp4 work like getchar
+	deque<char> buffer;
+	string buffData;
+	char charVal;	//used as a
+
 	
 	
 	//R0-R15 general use pc will be R16 so in total 17 elements in register array
@@ -48,7 +55,8 @@ void runVM(string fileN) {
 	//set the end to SB
 	r[18] = binF.tellg();
 	//set SL to SB -1020
-	r[17] = r[18] - 1024;
+	//I CHANGED IT TO BE -1023 INSTEAD OF -1024
+	r[17] = r[18] - 1023;
 	//might not need to do -4 to set maxPc might just be -1
 	int maxPc = r[17] - 1;
 	//auto maxPc = binF.tellg();
@@ -245,15 +253,47 @@ void runVM(string fileN) {
 					break;
 				case 2:
 					cin >> r[3];
+					//eats all remaining values
+					//will this cause an issue with the other tests
+					cin.ignore(INT_MAX, '\n');
 					break;
 				case 3:
 					cout << char(r[3]);
 					break;
 				case 4:
-					//will require to take a whole string(while loop of getchar() and store it in a char array) but only return the first one of it and move the pointer when trp3 is called
-					// 
+					//will require to take a whole string(while loop of getchar() and store it in a char array) 
+					// but only return the first one of it and move the pointer when trp3 is called
+					// if you are using it as a string we need to use it like the way he said. we could also do a vector and call while cin >> char variable 
 					//cin >> readB;//its gonna do implicit conversion if input is a char reading byte not int 
-					r[3] = int(getchar());
+					//hold some buffer, read a line of data and also when you send the data as the next get char when you 
+					//reach the end of line character send it as well to the keyboard
+					//this will make it work like getchar 18:30 
+					// 
+					// 
+					//22.11 how getchar works you provide a series of characters hello hit enter when you hit enter it takes that whole string
+					//inluding that \n at the end of the line when you hit enter and sends those characters one at a time to your variable
+					//he has to test our project to work just like getchar 
+					//we do have to provide \n within the container we hold it, because in the code it checks the last spot in the array if it is \n
+
+					//check if buffer is empty
+					if (buffer.empty()) {
+						cin >> buffData;
+						
+						charVal = getchar();//picks up the \n character from our action of pushing the enter key
+						buffData += charVal;
+						//store the characters in the deque
+						for (size_t i = 0; i < buffData.length(); i++)
+						{
+							buffer.push_back(buffData[i]);
+						}
+					}
+
+					//charVal will contain the next character in our buffer container
+					charVal = buffer.front();
+					buffer.pop_front();
+
+					r[3] = int(charVal);
+					//r[3] = int(getchar());
 					break;
 
 				}
