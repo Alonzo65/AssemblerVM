@@ -177,29 +177,47 @@ void runVM(string fileN) {
 				break;
 			case 8:	//LDA only work if label is to a directive
 				if (directiveSegment.first <= operand2 && operand2 < directiveSegment.second) {
-					r[operand1] = long long(dataSegment + operand2);
+					//GONNA STORE THE OFFSET TO GET TO THE VALUE because thats the way it has to be done form my stack 
+					r[operand1] = operand2;
+
+					//r[operand1] = long long(dataSegment + operand2);
 				}
 				
 				break;
 			case 9:	//STR //since it gives the offset we can just access it directly in our dataSegment
-				dataSegment[operand2] = int(r[operand1]);
+				//dataSegment[operand2] = int(r[operand1]);
+				dataPtr = dataSegment;
+				dataPtr += operand2;
+				memcpy(dataPtr, (char*)&r[operand1], sizeof(int));
 				
 				break;
 			case 10:	//ldr
 				//changed this to read in 4 bytes from the label instead of just one like ldb
-				binF.seekg(operand2, ios::beg);
-				binF.read(byte, sizeof(int));
-				r[operand1] = *(int*)(byte);
-				binF.seekg(r[16], ios::beg);
+				//have to take most upddated values from our datasegment not the file 
+				dataPtr = dataSegment;
+				dataPtr += operand2;
+				
+				//maybe do error checking to see if its trying to access outside of the file
+
+				r[operand1] = *(int*)(dataPtr);
+				//binF.seekg(operand2, ios::beg);
+				//binF.read(byte, sizeof(int));
+				//r[operand1] = *(int*)(byte);
+				//binF.seekg(r[16], ios::beg);
 				break;
 			case 11:	//STB //since it gives the offset we can just access it directly in our dataSegment
 				dataSegment[operand2] = char(r[operand1]);
 
 				break;
 			case 12:	//ldb
-				binF.seekg(operand2, ios::beg);
-				r[operand1] = binF.peek();
-				binF.seekg(r[16], ios::beg);
+				//have to take most upddated values from our datasegment not the file 
+				dataPtr = dataSegment;
+				dataPtr += operand2;
+
+				r[operand1] = *(dataPtr);
+				//binF.seekg(operand2, ios::beg);
+				//r[operand1] = binF.peek();
+				//binF.seekg(r[16], ios::beg);
 				break;
 			case 13:	//add
 				if (operand1 == 16) {
@@ -312,6 +330,7 @@ void runVM(string fileN) {
 				//its working correctly
 				//dataPtr++;
 				//dataPtr++;
+
 				
 				break;
 			case 23:	//LDR
