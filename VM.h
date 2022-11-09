@@ -64,7 +64,8 @@ void runVM(string fileN) {
 
 	//set the stack pointer and frame pointer
 	//assembly instruction will decrement sp by 4 so we dont need to do that here
-	r[19] = r[18];
+	//do we need to decrement sp by 4 initially? YES IT DOES INITIALLY SB-4
+	r[19] = r[18]-4;
 	r[20] = r[18];
 
 
@@ -370,7 +371,7 @@ void runVM(string fileN) {
 
 		//check if pc is out of bounds
 		//also check if there is a stack overflow or underflow.
-		if (r[19] > r[18]) {
+		if ((r[19] + 4) > r[18]) {
 			cout << "Error: stack underflow detected: SP > SB" << endl;
 			exit(0);
 		}
