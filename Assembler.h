@@ -38,7 +38,7 @@ void runAssembler(string fileN) {
 
 		//DECLARE STACK AND SIZE
 		//char* stack = (char*)malloc(1024);//bytes for the whole stack
-		char stack[1024] = {};
+		char stackHeap[2048] = {};
 		//open out .asm file
 		ifstream asmFile(fileN, ios::in);
 		fileName = fileN;
@@ -249,7 +249,7 @@ void runAssembler(string fileN) {
 		//reset the eof() bit
 		asmFile.clear();
 		//attach stack to end of bin file
-		binFile.write(stack, 1024);
+		binFile.write(stackHeap, 2048);
 		//close the bin file
 		binFile.close();
 }

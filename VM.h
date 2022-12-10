@@ -34,8 +34,8 @@ void runVM(string fileN) {
 	
 	
 	//R0-R15 general use pc will be R16 so in total 17 elements in register array
-	long long r[21] = {};	//have to make r[16] which is the pc read only
-	//registers can now have SL:17, SB:18, SP:19, FP:20(we will just use a general use register to act as the PFP)
+	long long r[23] = {};	//have to make r[16] which is the pc read only
+	//registers can now have SL:17, SB:18, SP:19, FP:20 HP:21 HT:22(we will just use a general use register to act as the PFP)
 	char readB;//used to hold a byte when reading in from cin
 	char byte[3 * sizeof(int)] = {}; //12 bytes, array is initialized to zero for all registers
 
@@ -56,7 +56,11 @@ void runVM(string fileN) {
 	r[18] = binF.tellg();
 	//set SL to SB -1020
 	//I CHANGED IT TO BE -1023 INSTEAD OF -1024
-	r[17] = r[18] - 1023;
+	r[17] = r[18] - 2047;
+	//set the HP and HT equal to SL, when we allocate on heap we need to move SL and HP together, keep HT where it is?(right now im moving them using assembly code, 
+	// if we did it in vm it would be a lot of checking)
+	r[21] = r[17];
+	r[22] = r[17];
 	//might not need to do -4 to set maxPc might just be -1
 	int maxPc = r[17] - 1;
 	//auto maxPc = binF.tellg();
@@ -113,7 +117,10 @@ void runVM(string fileN) {
 
 	//might place this in a function called fetch
 	binF.read(byte, 3 * sizeof(int)); // 12 bytes read
-	r[16] = int(byte[0]);	//might need to change this to read 4 bytes instead of just one
+	//changed the next line from r[16] = int(byte[0]); to what it is now
+	// this is because if the bin value in hex is ever A in the beginning it will read the value as a negative number
+	//since it interprets it as a twos complment, resulting in a wrong and negative PC number
+	r[16] = unsigned char(int(byte[0]));	//might need to change this to read 4 bytes instead of just one
 	binF.seekg(r[16], ios::beg);	//set pointer of file stream to main instruction
 	
 	//will be used in LDA to check if label is a directive
@@ -379,8 +386,19 @@ void runVM(string fileN) {
 			cout << "Error: stack overflow detected: SP < SL" << endl;
 			exit(0);
 		}
+		//check for heap overflow or underflow
+		if (r[21] > r[19])	//if heap pointer crosses the stack pointer we have overuse of heap(heap overflow)
+		{
+			cout << "Error: overuse of heap detected(heap overflow): HP > SP" << endl;
+			exit(0);
+		}
+		else if (r[21] < r[22])	//underflow double check to see how we check for this correctly, right now we have if heap pointer is less than heap Top, then we have a heap underflow since we would be in the code segment
+		{
+			cout << "Error: heap underflow detected: HP < HT" << endl;
+			exit(0);
+		}
 		if (r[16] > maxPc) {
-			cout << "Error, pc is out of bounds and in the data segment: pc > maxPc" << endl;
+			cout << "Error, pc is out of bounds and in the data segment: pc > maxPc: " << r[16] << endl;
 			exit(0);
 		}
 		else if (r[16] < minPc) {
