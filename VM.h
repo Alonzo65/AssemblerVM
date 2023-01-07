@@ -30,7 +30,7 @@ void runVM(string fileN) {
 	deque<char> buffer;
 	string buffData;
 	char charVal;	//used as a
-
+	int temp = 0; //used to hold values in the ALLC instructions
 	
 	
 	//R0-R15 general use pc will be R16 so in total 17 elements in register array
@@ -363,6 +363,42 @@ void runVM(string fileN) {
 				dataPtr += r[operand2];
 
 				r[operand1] = *(dataPtr);	//is already a char* so dereferencing it returns a byte of size char
+
+				break;
+			case 35:	//ALLC operand 2 is a decimal number (IMMEDIATE)
+				//store pointer to segment of memory allocated in memory in r[operand1]
+				//we store the offset to get to that memory location in our data segment instead of storing the actual address
+				// need to move stack limit and stack pointer together
+				r[operand1] = r[21]; //store offset to the beginning of the memory allocated into r[operand1]
+
+				//move HP and SL
+				r[21] += operand2;
+				r[17] += operand2;
+
+					
+				
+				break;
+			case 36:	//ALLC operand 2 is a label(we are assuming that we read an int size bytes from the label)
+				
+				r[operand1] = r[21]; //store offset to the beginning of the memory allocated into r[operand1]
+
+				dataPtr = dataSegment;
+				dataPtr += operand2;
+				temp = *(int*)(dataPtr);
+				//move HP and SL
+				r[21] += temp;
+				r[17] += temp;
+
+				break;
+			case 37:	//ALLC operand 2 is a register(we are assuming that we read an int size bytes from the address stored in the register)
+				r[operand1] = r[21]; //store offset to the beginning of the memory allocated into r[operand1]
+
+				dataPtr = dataSegment;
+				dataPtr += r[operand2];
+				temp = *(int*)(dataPtr);
+				//move HP and SL
+				r[21] += temp;
+				r[17] += temp;
 
 				break;
 			default:

@@ -130,6 +130,41 @@ public:
 				throw invalid_argument(errMsg);
 			}
 		}
+		else if (instruction == 35) {	//ALLC possible variants (HEAP INSTRUCTION)
+			//check to see if there is a comma and white space seperating operand 1 and operand 2
+			if (operand1.find(", ") == string::npos) {
+				//throw an exception message saying that there needs to be a comma and white space seperating operand 1 and 2
+				errMsg = "Syntax error: There needs to be a comma and white space seperating operand 1 and operand 2.";
+				throw invalid_argument(errMsg);
+			}
+			
+
+			//set oper1 to operand1, but without any commas
+			oper1 = operand1.substr(0, operand1.find(","));
+
+			//check if oper1 is a register and operand2 is a label
+			if (registers.count(oper1) > 0 && symbolTabl.count(operand2) > 0) {
+				//operand 1 is a register and operand 2 is a label
+				//set binaryVals to a new tuple of the int values of instruction, oper1, and operand2
+				//opcode is still Allc but with a different number
+				binaryVals = make_tuple(36, registers.at(oper1), symbolTabl.at(operand2));
+			}
+			else if (registers.count(oper1) > 0 && registers.count(operand2) > 0) {
+				//operand 1 is a register and operand 2 is a register
+				//opcode is still Allc but with a different number
+				binaryVals = make_tuple(37, registers.at(oper1), registers.at(operand2));
+			}
+			else if (registers.count(oper1) > 0 && operand2 != "") {
+				//operand 1 is a register and operand 2 is a register
+				
+				binaryVals = make_tuple(instruction, registers.at(oper1), stoi(operand2));
+			}
+			else {
+				//throw an exception message saying that <instruction> requires that operand1 be a register and operand 2 has to be a label
+				errMsg = opcode + " instruction requires that operand 1 be a register and operand 2 be a label, a register, or a decimal number.";
+				throw invalid_argument(errMsg);
+			}
+		}
 		else if (instruction == 14) {//ADI AND ANY OTHER IMMEDIATE OPCODES
 			
 				oper1 = operand1.substr(0, operand1.find(","));
@@ -185,7 +220,8 @@ private:
 		{"MUL", 16},
 		{"DIV", 17},
 		{"CMP", 20},
-		{"TRP", 21}	
+		{"TRP", 21},
+		{"ALLC", 35} //base case
 	};
 	
 	unordered_map<string, pair<int,int>> moveOpcodes = {
@@ -195,6 +231,7 @@ private:
 		{"STB", pair<int,int>(11, 24)},
 		{"LDB", pair<int,int>(12, 25)}
 	};
+	
 
 	unordered_map<string, int> registers = {
 		{"R0", 0},

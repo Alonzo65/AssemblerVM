@@ -202,6 +202,9 @@ void runAssembler(string fileN) {
 								else if (operand1 == "\\t") {
 									charRep = 8;
 								}
+								else if (operand1 == "\\0") {
+									charRep = 0;
+								}
 								else {
 									//throw an exception saying that .byt only allocates one byte, you provided more than one byte to store
 									throw invalid_argument("Provided more than one byte to store, .BYT only allocates space for one byte");
